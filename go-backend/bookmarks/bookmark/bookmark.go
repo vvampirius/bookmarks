@@ -1,6 +1,7 @@
 package bookmark
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -44,4 +45,27 @@ func (bookmark Bookmark) Url() string {
 
 func (bookmark Bookmark) SetUrl(url string) error {
 	return ioutil.WriteFile(path.Join(bookmark.Path, "url"), []byte(url), 0600)
+}
+
+func New(url string, p string, createIfNotExists bool) (Bookmark, error) {
+	b := Bookmark{}
+	if len(p) == 0 {
+		return b, errors.New("path is empty!")
+	}
+	if len(url) > 0 {
+		if len(url) <= 3 {
+			return b, errors.New("url is too short!")
+		}
+		p = path.Join(p, GetMD5Hash(url))
+	}
+	b.Path = p
+	if createIfNotExists {
+		if err := b.CreateIfNotExists(); err != nil {
+			return b, err
+		}
+	}
+	if b.Exists() == false {
+		return b, errors.New(url + " doesn't exists!")
+	}
+	return b, nil
 }
