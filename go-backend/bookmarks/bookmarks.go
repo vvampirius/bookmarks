@@ -73,7 +73,13 @@ func (bookmarks Bookmarks) HttpGet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if b, err := bookmarks.Get(url, password); err == nil {
-		fmt.Fprintln(w, b.Url())
+		if j, err := b.Json(); err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, j)
+		} else {
+			w.WriteHeader(http.StatusBadGateway)
+			fmt.Fprintln(w, err.Error())
+		}
 	} else if err.Error() == "Access Forbidden!" {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintln(w, err.Error())
