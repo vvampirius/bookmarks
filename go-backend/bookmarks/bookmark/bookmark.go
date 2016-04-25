@@ -1,7 +1,6 @@
 package bookmark
 
 import (
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -14,7 +13,7 @@ type Bookmark struct {
 	Path string
 }
 
-type jsonFmt struct {
+type BookmarkType struct {
 	Url string `json:"url"`
 }
 
@@ -52,9 +51,8 @@ func (bookmark Bookmark) SetUrl(url string) error {
 	return ioutil.WriteFile(path.Join(bookmark.Path, "url"), []byte(url), 0600)
 }
 
-func (bookmark Bookmark) Json() (string, error) {
-	j, err := json.Marshal(jsonFmt{Url: bookmark.Url()})
-	return string(j), err
+func (bookmark Bookmark) Bookmark() BookmarkType {
+	return BookmarkType{Url: bookmark.Url()}
 }
 
 func New(url string, p string, createIfNotExists bool) (Bookmark, error) {

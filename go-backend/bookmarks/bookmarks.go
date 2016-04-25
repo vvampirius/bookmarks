@@ -1,6 +1,7 @@
 package bookmarks
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/vvampirius/bookmarks/go-backend/bookmarks/bookmark"
@@ -73,9 +74,9 @@ func (bookmarks Bookmarks) HttpGet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if b, err := bookmarks.Get(url, password); err == nil {
-		if j, err := b.Json(); err == nil {
+		if j, err := json.Marshal(b.Bookmark()); err == nil {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprintln(w, j)
+			fmt.Fprintln(w, string(j))
 		} else {
 			w.WriteHeader(http.StatusBadGateway)
 			fmt.Fprintln(w, err.Error())
