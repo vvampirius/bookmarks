@@ -14,6 +14,7 @@ func main() {
 	bs := bookmarks.Bookmarks{"/tmp"}
 	http.HandleFunc("/get/", bs.HttpGet)
 	http.HandleFunc("/add/", bs.HttpAdd)
+	http.HandleFunc("/list/", bs.HttpList)
 	err := http.ListenAndServe(":9090", nil) // set listen port
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

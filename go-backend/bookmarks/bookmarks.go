@@ -62,6 +62,23 @@ func (bookmarks Bookmarks) Add(url string, password string) (bool, error) {
 	return added, err
 }
 
+func (bookmarks Bookmarks) List(password string) ([]bookmark.Bookmark, error) {
+	var bs []bookmark.Bookmark
+	if passwordCheck, _ := bookmarks.CheckPassword("list.password", password); passwordCheck == false {
+		return bs, errors.New("Access Forbidden!")
+	}
+	if files, err := ioutil.ReadDir(bookmarks.Path); err == nil {
+		for _, file := range files {
+			if len(file.Name()) == 32 {
+				if b, err := bookmark.New("", path.Join(bookmarks.Path, file.Name()), false); err == nil {
+					bs = append(bs, b)
+				}
+			}
+		}
+	}
+	return bs, nil
+}
+
 func (bookmarks Bookmarks) HttpGet(w http.ResponseWriter, r *http.Request) {
 	var url, password string
 	r.ParseForm()
@@ -103,6 +120,35 @@ func (bookmarks Bookmarks) HttpAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	if b, err := bookmarks.Add(url, password); b && err == nil {
 		fmt.Fprintln(w, "ADDED")
+	} else if err.Error() == "Access Forbidden!" {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintln(w, err.Error())
+	} else {
+		w.WriteHeader(http.StatusBadGateway)
+		fmt.Fprintln(w, err.Error())
+	}
+}
+
+func (bookmarks Bookmarks) HttpList(w http.ResponseWriter, r *http.Request) {
+	var password string
+	r.ParseForm()
+	for k, v := range r.Form {
+		if k == "password" {
+			password = string([]rune(v[0]))
+		}
+	}
+	if bs, err := bookmarks.List(password); err == nil {
+		var bst []bookmark.BookmarkType
+		for _, b := range bs {
+			bst = append(bst, b.Bookmark())
+		}
+		if j, err := json.Marshal(bst); err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, string(j))
+		} else {
+			w.WriteHeader(http.StatusBadGateway)
+			fmt.Fprintln(w, err.Error())
+		}
 	} else if err.Error() == "Access Forbidden!" {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintln(w, err.Error())
